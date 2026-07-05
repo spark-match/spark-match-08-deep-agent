@@ -250,3 +250,7 @@ Trabajo de Fin de Programa (TFP) — **UNI** II Programa de Especialización en 
 ## Licencia
 
 MIT
+
+## Nota de prueba
+
+Este párrafo es para verificar la nueva política de aprobación.
