@@ -1,0 +1,66 @@
+[project]
+name = "spark-match-agent"
+version = "0.1.0"
+description = "Spark Match - Deep Agent for vocational guidance and career planning"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+authors = [{ name = "Spark Match Team" }]
+dependencies = [
+    # Deep Agents (harness + LangGraph runtime)
+    "deepagents>=0.6.12",
+    # LangChain AWS integration (Bedrock)
+    "langchain-aws>=1.6.1",
+    # AG-UI protocol for LangGraph (frontend streaming)
+    "ag-ui-langgraph>=0.0.11",
+    # Long-term memory (profile extraction from conversations)
+    "langmem>=0.0.30",
+    # FastAPI + SSE
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "sse-starlette>=2.2.0",
+    # Settings management
+    "pydantic-settings>=2.8.0",
+    # HTTP client (for tools)
+    "httpx>=0.28.0",
+    # Web search: Tavily (primary) + DuckDuckGo (fallback)
+    "tavily-python>=0.5.0",
+    "duckduckgo-search>=7.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=1.0.0",
+    "ruff>=0.9.0",
+    "mypy>=1.15.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
