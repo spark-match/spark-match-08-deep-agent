@@ -3,6 +3,52 @@
 from src.tools.assessment import evaluate_riasec_profile
 from src.tools.catalog import search_careers
 from src.tools.matching import calculate_affinity
+from src.tools.web_search import web_search
+
+# ---------- web_search budget guard ----------
+
+
+class TestWebSearchBudget:
+    """Web search tool must refuse calls beyond the configured cap."""
+
+    def test_refuses_when_budget_exhausted(self, monkeypatch):
+        """After the cap is reached, web_search returns a budget message."""
+        import sys
+
+        from src import budget
+        from src.config import get_settings
+
+        # Force a tiny cap so the test is fast
+        monkeypatch.setenv("SPARK_MAX_WEB_SEARCHES_PER_SESSION", "2")
+        get_settings.cache_clear()
+
+        # Make the underlying providers no-ops (avoid network).
+        # The module-level helpers live in src.tools.web_search; reach it via
+        # sys.modules because src/tools/__init__.py re-exports the StructuredTool
+        # symbol under the same name, which shadows the module on `import as`.
+        ws_module = sys.modules["src.tools.web_search"]
+
+        def fake_search(query, max_results):
+            return [{"title": "x", "url": "", "content": "x"}]
+
+        monkeypatch.setattr(ws_module, "_search_tavily", fake_search)
+        monkeypatch.setattr(ws_module, "_search_duckduckgo", fake_search)
+
+        # Use an isolated session for this test
+        budget._active_session.set("budget_test_1")
+        budget.reset_session_budget("budget_test_1")
+        try:
+            r1 = web_search.invoke({"query": "first"})
+            r2 = web_search.invoke({"query": "second"})
+            r3 = web_search.invoke({"query": "third"})  # over budget
+
+            assert r1[0]["title"] != "Budget exceeded"
+            assert r2[0]["title"] != "Budget exceeded"
+            assert r3[0]["title"] == "Budget exceeded"
+            assert "budget exhausted" in r3[0]["content"].lower()
+        finally:
+            budget.reset_session_budget("budget_test_1")
+            budget._active_session.set(budget.DEFAULT_SESSION_ID)
 
 
 class TestAssessment:
