@@ -71,4 +71,4 @@ def create_spark_agent() -> CompiledStateGraph[Any, Any, Any, Any]:
     # relying on LangGraph's `recursion_limit` (which produces cryptic errors).
     # See IMPROVEMENTS.md §4.2 for the proposed middleware implementation.
 
-    return agent
+    return agent  # noqa: RET504 — kept as a local for the upcoming middleware hook

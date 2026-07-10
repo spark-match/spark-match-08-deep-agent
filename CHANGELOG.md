@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (PR #7 — Sprint 3)
+
+- **§4.1 — LangSmith observability**: new `src/observability/langsmith.py` with `configure_langsmith()` (idempotent) and `is_langsmith_enabled()`. Pushes `SPARK_LANGSMITH_*` settings into the `LANGSMITH_*` env vars that `langchain-aws` / `deepagents` read automatically. `app.py` lifespan calls it on startup so traces flow to the configured project. Trivially opt-in: set `SPARK_LANGSMITH_TRACING=true` + `SPARK_LANGSMITH_API_KEY` in `.env`.
+- **§4.6 — Markdown prompts**: moved the 4 system prompts (coordinator, assessment, matching, planning) from inline Python strings to `src/prompts/*.md` files with YAML frontmatter (`audience`, `loaded_by`, `versioned`). New `src/prompts/loader.py` with `load_prompt(name)`, `get_prompt_metadata(name)`, `list_prompts()`, `reload_prompts()`. Subagent modules import from `src.prompts` instead of defining the prompt themselves. Removed `src/prompts/system.py`.
+- **§5.1 — Expanded lint config**: ruff lint rules now include `ASYNC`, `PT`, `RET`, `RUF` (was just `E`, `F`, `I`, `UP`, `B`, `SIM`). New `per-file-ignores` allow `S101` (assert) and `PT004` (fixture returns) in tests. mypy now has `disallow_untyped_defs`, `no_implicit_optional`, `warn_redundant_casts`, `warn_unused_ignores` on top of `strict = true`. Consolidated `[project.optional-dependencies]` into `[dependency-groups]` dev group (uv 0.5+ idiom).
+- **15 tests in `tests/test_prompts.py`**: loader on real `.md` files, metadata parsing, re-export consistency, frontmatter edge cases.
+- **5 tests in `tests/test_langsmith.py`**: env-var push, idempotency, masking regression test for `SecretStr`.
+
+### Changed
+
+- `src/agent/subagents/{assessment,matching,planning}.py` are now thin wrappers: just import the prompt and define the `SubAgent` dict. Prompt engineering is no longer mixed with code logic.
+- `src/prompts/__init__.py` re-exports `SYSTEM_PROMPT`, `ASSESSMENT_SYSTEM_PROMPT`, `MATCHING_SYSTEM_PROMPT`, `PLANNING_SYSTEM_PROMPT`, `list_prompts`, `reload_prompts`.
+- `src/api/app.py` lifespan now calls `configure_langsmith()` after `setup_logging()` and before agent construction.
+
+## [0.3.0] - 2026-07-10 (PR #6 — Sprint 2)
+
 ### Added (PR #6 — Sprint 2 + correcciones pre-existentes)
 
 - **FIX-1 — AG-UI endpoint migration**: replaced deprecated `create_endpoint(agent)` with `LangGraphAgent` wrapper + manual `/ag-ui` endpoint that uses `EventEncoder` + `RunAgentInput`. The new endpoint reads `thread_id` from the request body and uses it as the active session for budget tracking.
